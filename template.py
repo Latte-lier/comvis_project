@@ -1,6 +1,6 @@
 import scipy as sc
 import cv2 as cv
-
+import numpy as np
 import os
 
 def get_all_train_image_labels(path):
@@ -123,6 +123,16 @@ def get_all_test_images(path):
         list
             List containing all image in the test directories
     '''
+    # test_image = os.listdir(path)
+    image_tested = []
+
+    for filename in path:
+        img = cv.imread(path + '\\' + filename)
+        image_tested.append(img)
+
+    return image_tested
+
+
 
 def predict(classifier, gray_test_image_list):
     '''
