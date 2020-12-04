@@ -91,6 +91,27 @@ def detect_faces_and_filter(image_list, image_labels=None):
         list
             List containing all filtered image classes label
     '''
+    face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
+    face_list = []
+    class_list = []
+    gray_img = []
+
+    for index, logo_name in enumerate(image_list):
+        for image_path in image_list:
+            img_gray = cv.cvtColor(image_path, cv.COLOR_BGR2GRAY)
+            gray_img.append(img_gray)
+            detected_faces = face_cascade.detectMultiScale(img_gray, scaleFactor=1.2, minNeighbors=5)
+            if(len(detected_faces) < 1):
+                continue
+            for face_rect in detected_faces:
+                x,y,w,h=face_rect
+                face_img = img_gray[y:y+w, x:x+h]
+                face_list.append(face_img)
+                class_list.append(index)
+
+    return(face_list, gray_img, class_list)
+
+    # Semoga bener ini ya 
 
 def train(gray_image_list, gray_labels):
     '''
@@ -108,6 +129,10 @@ def train(gray_image_list, gray_labels):
         object
             Classifier object after being trained with cropped face images
     '''
+    face_recognizer=cv.face.LBPHFaceRecognizer_create()
+    face_recognizer.train(gray_image_list, np.array(gray_labels))
+
+    return face_recognizer
 
 def get_all_test_images(path):
     '''
@@ -150,6 +175,7 @@ def predict(classifier, gray_test_image_list):
         list
             List containing all prediction results from given test faces
     '''
+    
 
 def write_prediction(predict_results, test_image_list, test_faces_rects, train_labels):
     '''
