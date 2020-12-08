@@ -45,30 +45,32 @@ def get_all_train_images(path):
     '''
     label_list = os.listdir(path)
 
-    scale_percent = 60 # percent of original size
-
     resized_img_list = []
 
-    for label in label_list:
+    for k, label in enumerate(label_list):
         index_list = os.listdir(path + label)
-        for index in index_list:
-            try:
-                img = cv.imread(path + label + '\\' + index, cv.IMREAD_UNCHANGED)
+        for i, index in enumerate(index_list):
+            if(i+1) == len(index_list):
+                break
+            new_path = path + label + '/' + index
+            # print(new_path)
+            if '.db' in new_path:
+                continue
+            img = cv.imread(new_path)
 
-                width = int(img.shape[1] * scale_percent / 100)
-                height = int(img.shape[0] * scale_percent / 100)
-                dim = (width, height)
-                
-                resized_img = cv.resize(img, dim, interpolation = cv.INTER_AREA)
+            width = 300
+            height = int(img.shape[0]/ (img.shape[1]/300))
+            dim = (width, height)
+            
+            resized_img = cv.resize(img, dim, interpolation = cv.INTER_AREA)
 
-                resized_img_list.append(resized_img)
-            except:
-                pass
+            resized_img_list.append((k, resized_img))
+            
+            # cv.imshow('title',img_gray)
+            # cv.waitKey(1000)
     
-    print(resized_img_list)
+    # print(resized_img_list)
     return resized_img_list
-
-
 
 def detect_faces_and_filter(image_list, image_labels=None):
     '''
@@ -96,22 +98,22 @@ def detect_faces_and_filter(image_list, image_labels=None):
     class_list = []
     gray_img = []
 
-    for index, logo_name in enumerate(image_list):
-        for image_path in image_list:
-            img_gray = cv.cvtColor(image_path, cv.COLOR_BGR2GRAY)
-            gray_img.append(img_gray)
-            detected_faces = face_cascade.detectMultiScale(img_gray, scaleFactor=1.2, minNeighbors=5)
-            if(len(detected_faces) < 1):
-                continue
-            for face_rect in detected_faces:
-                x,y,w,h=face_rect
-                face_img = img_gray[y:y+w, x:x+h]
-                face_list.append(face_img)
-                class_list.append(index)
+    for k, image in image_list:
+        img_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        
+        detected_faces = face_cascade.detectMultiScale(img_gray, scaleFactor=1.2, minNeighbors=5)
+        if(len(detected_faces) < 1):
+            continue
+        for face_rect in detected_faces:
+            x,y,w,h=face_rect
+            face_img = img_gray[y:y+w, x:x+h]
+            face_list.append(face_img)
+            class_list.append(k)
+            gray_img.append(face_rect)
+        
 
+    # print(class_list)
     return(face_list, gray_img, class_list)
-
-    # Semoga bener ini ya 
 
 def train(gray_image_list, gray_labels):
     '''
@@ -148,16 +150,23 @@ def get_all_test_images(path):
         list
             List containing all image in the test directories
     '''
-    # test_image = os.listdir(path)
     image_tested = []
+    test_image = os.listdir(path)
+    for i, filename in enumerate(test_image):
+        if(i+1) == len(test_image):
+            break
+        new_path = path + filename
+        # print(new_path)
+        if '.db' in new_path:
+            continue
+        img = cv.imread(new_path)
+        image_tested.append((i, img))
 
-    for filename in path:
-        img = cv.imread(path + '\\' + filename)
-        image_tested.append(img)
+    # for iamge in image_tested:
+    #     cv.imshow('title', iamge)
+    #     cv.waitKey(500)
 
     return image_tested
-
-
 
 def predict(classifier, gray_test_image_list):
     '''
@@ -175,7 +184,15 @@ def predict(classifier, gray_test_image_list):
         list
             List containing all prediction results from given test faces
     '''
-    
+
+    predicted = []
+
+    for iamge in gray_test_image_list:
+        res, _ = classifier.predict(iamge)
+        predicted.append(res)
+
+    # print(predicted)
+    return predicted
 
 def write_prediction(predict_results, test_image_list, test_faces_rects, train_labels):
     '''
@@ -199,6 +216,19 @@ def write_prediction(predict_results, test_image_list, test_faces_rects, train_l
             final result
     '''
 
+    result = []
+    for i, image in test_image_list:
+        x,y,w,h = test_faces_rects[i]
+        cv.rectangle(image,  (x,y), (x+w, y+h), (254, 204, 51), 2)
+        text = train_labels[predict_results[i]]
+        cv.putText(image, text, (x,y -10), cv.FONT_HERSHEY_PLAIN, 1.5, (0,255,0), 2)
+        # cv.imshow('title', image)
+        # cv.waitKey(0)
+        result.append(image)
+    
+    return result
+    
+
 def combine_and_show_result(image_list):
     '''
         To show the final image that already combine into one image
@@ -208,7 +238,10 @@ def combine_and_show_result(image_list):
         image_list : nparray
             Array containing image data
     '''
+    final_result = np.hstack((image_list))       
 
+    cv.imshow('Final Result', final_result)
+    cv.waitKey(0)
 
 '''
 You may modify the code below if it's marked between
@@ -235,7 +268,7 @@ if __name__ == "__main__":
         -------------------
     '''
     current_dir = os.getcwd()
-    train_path = str(current_dir + '\\dataset\\train\\')
+    train_path = str(current_dir + '/dataset/train/')
     '''
         -------------------
         End of modifiable
@@ -255,7 +288,7 @@ if __name__ == "__main__":
         Modifiable
         -------------------
     '''
-    test_path = str(current_dir + '\\dataset\\test\\')
+    test_path = str(current_dir + '/dataset/test/')
     '''
         -------------------
         End of modifiable
