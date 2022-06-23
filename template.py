@@ -19,6 +19,7 @@ def get_all_train_image_labels(path):
         list
             List containing all train images indexes
     '''
+    # get list of image name in dataset folder
     label_list = os.listdir(path)
     
     index_list = []
@@ -47,6 +48,7 @@ def get_all_train_images(path):
 
     resized_img_list = []
 
+    # iterate through list of images and get all images, resize to desired settings
     for k, label in enumerate(label_list):
         index_list = os.listdir(path + label)
         for i, index in enumerate(index_list):
@@ -93,6 +95,7 @@ def detect_faces_and_filter(image_list, image_labels=None):
         list
             List containing all filtered image classes label
     '''
+    # implement haarcascade and detect face features
     face_cascade = cv.CascadeClassifier('haarcascade_frontalface_default.xml')
     face_list = []
     class_list = []
@@ -131,6 +134,7 @@ def train(gray_image_list, gray_labels):
         object
             Classifier object after being trained with cropped face images
     '''
+    # implement face recognizer model
     face_recognizer=cv.face.LBPHFaceRecognizer_create()
     face_recognizer.train(gray_image_list, np.array(gray_labels))
 
@@ -150,6 +154,7 @@ def get_all_test_images(path):
         list
             List containing all image in the test directories
     '''
+    # get test data
     image_tested = []
     test_image = os.listdir(path)
     for i, filename in enumerate(test_image):
@@ -184,7 +189,7 @@ def predict(classifier, gray_test_image_list):
         list
             List containing all prediction results from given test faces
     '''
-
+    # implement trained model to conduct prediction
     predicted = []
 
     for iamge in gray_test_image_list:
@@ -215,7 +220,7 @@ def write_prediction(predict_results, test_image_list, test_faces_rects, train_l
             List containing all test images after being drawn with
             final result
     '''
-
+    # model output rectangle showing detected face
     result = []
     for i, image in test_image_list:
         x,y,w,h = test_faces_rects[i]
@@ -238,6 +243,7 @@ def combine_and_show_result(image_list):
         image_list : nparray
             Array containing image data
     '''
+    # data merging and visualization
     final_result = np.hstack((image_list))       
 
     cv.imshow('Final Result', final_result)
